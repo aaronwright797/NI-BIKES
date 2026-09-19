@@ -3,8 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
+import LogoutButton from "./LogoutButton";
 
-export default function Header() {
+export default function Header({ user, profile }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
@@ -29,6 +30,19 @@ export default function Header() {
           <button onClick={() => scrollTo("valuation")}>Valuations</button>
           <button onClick={() => scrollTo("serious")}>Advice</button>
         </nav>
+        <div className="auth-nav">
+          {user ? (
+            <>
+              <span className="auth-nav-name">Hi, {profile?.display_name || "there"}</span>
+              <LogoutButton className="btn btn-ghost" />
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="btn btn-ghost">Log in</Link>
+              <Link href="/signup" className="btn btn-ghost">Sign up</Link>
+            </>
+          )}
+        </div>
         <Link href="/sell" className="btn btn-amber sell-cta-header">Sell your bike</Link>
         <button
           className="mobile-nav-toggle"
@@ -46,6 +60,17 @@ export default function Header() {
           <button onClick={() => scrollTo("dealers")}>Dealers</button>
           <button onClick={() => scrollTo("valuation")}>Valuations</button>
           <button onClick={() => scrollTo("serious")}>Advice</button>
+          {user ? (
+            <>
+              <span className="mobile-nav-name">Hi, {profile?.display_name || "there"}</span>
+              <LogoutButton className="mobile-nav-logout" />
+            </>
+          ) : (
+            <>
+              <Link href="/login" onClick={() => setMobileNavOpen(false)}>Log in</Link>
+              <Link href="/signup" onClick={() => setMobileNavOpen(false)}>Sign up</Link>
+            </>
+          )}
         </nav>
       )}
     </header>

@@ -26,10 +26,17 @@ h1,h2,h3{ font-family: 'Oswald', sans-serif; font-weight: 700; margin: 0; letter
 .mobile-nav-panel{ display: flex; flex-direction: column; border-top: 1px solid var(--line); background: var(--panel); }
 .mobile-nav-panel button, .mobile-nav-panel a{ background: transparent; border: none; border-bottom: 1px solid var(--line); color: var(--offwhite); font-family: 'Inter', sans-serif; font-weight: 500; font-size: 15px; text-align: left; padding: 14px 20px; cursor: pointer; }
 .mobile-nav-panel button:last-child, .mobile-nav-panel a:last-child{ border-bottom: none; }
+.auth-nav{ display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.auth-nav .btn{ padding: 8px 14px; }
+.auth-nav-name{ color: var(--steel); font-size: 13.5px; white-space: nowrap; }
+.mobile-nav-name{ padding: 14px 20px; color: var(--steel); font-size: 13.5px; border-bottom: 1px solid var(--line); }
+.mobile-nav-logout{ background: transparent; border: none; border-bottom: 1px solid var(--line); color: var(--offwhite); font-family: 'Inter', sans-serif; font-weight: 500; font-size: 15px; text-align: left; padding: 14px 20px; cursor: pointer; width: 100%; }
+
 @media (max-width: 820px){
   .nav{ display: none; }
   .mobile-nav-toggle{ display: flex; }
   .sell-cta-header{ display: none; }
+  .auth-nav{ display: none; }
 }
 @media (min-width: 821px){ .mobile-nav-panel{ display: none; } }
 

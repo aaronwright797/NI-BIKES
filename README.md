@@ -24,7 +24,8 @@ Open [http://localhost:3000](http://localhost:3000).
   - `/sell` — list-your-bike form (private seller or dealer)
 - SEO: unique `<title>`/description per listing and dealer page, Open Graph tags, `schema.org` `Vehicle`/`AutoDealer` structured data, `sitemap.xml`, `robots.txt`.
 - Seed data (12 bikes, 6 dealers) lives in `lib/data.js` and is currently hardcoded — no database reads yet.
-- Supabase client helpers are wired up (`utils/supabase/{client,server,middleware}.js`, `proxy.js` refreshing the auth session on every request) but nothing in the app calls them yet — listings, dealers and the sell form still run entirely on the seed data in `lib/data.js`.
+- Database schema is live in Supabase (`categories`, `dealers`, `profiles`, `listings`, `listing_photos`, `saved_listings`, all with RLS) — see `supabase/README.md`. The 6 real dealers are seeded; listings aren't yet (every listing needs a real owner account).
+- Email/password auth is wired up: `/login`, `/signup`, `/auth/confirm`, and the header shows the signed-in user or Log in/Sign up links. See `supabase/README.md` for a one-time dashboard step this needs. The Sell form, listings and dealers still run entirely on the seed data in `lib/data.js` — nothing reads from Supabase yet.
 
 ## Environment variables
 
@@ -43,4 +44,4 @@ Push this branch, then import the repo into [Vercel](https://vercel.com/new) (co
 
 ## Next up (Step 2)
 
-Run the schema in `NI-Bikes-MVP-Setup-Guide.md` against the Supabase project, add sign-up/log-in/log-out using the `utils/supabase` clients, replace `lib/data.js`'s hardcoded seed data with real reads/writes, and add photo upload to Supabase Storage.
+Seed the 12 demo listings into the `listings` table now that there are real accounts to own them, replace `lib/data.js`'s hardcoded seed data with real reads/writes, and add photo upload to Supabase Storage.
