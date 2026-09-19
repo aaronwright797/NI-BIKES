@@ -4,6 +4,7 @@ import SellForm from "@/components/SellForm";
 export const metadata = {
   title: "Sell Your Bike",
   description: "List your motorcycle for sale on NI Bikes — free for private sellers, with dealer stock solutions available.",
+  alternates: { canonical: "/sell" },
 };
 
 export default async function SellPage({ searchParams }) {

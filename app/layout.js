@@ -3,7 +3,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 export const metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://ni-bikes.vercel.app"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://nibikes.co.uk"),
   title: {
     default: "NI Bikes — Northern Ireland's Motorcycle Marketplace",
     template: "%s | NI Bikes",

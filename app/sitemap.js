@@ -1,7 +1,7 @@
 import { SEED_LISTINGS, getAllDealers } from "@/lib/data";
 
 export default function sitemap() {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || "https://ni-bikes.vercel.app";
+  const base = process.env.NEXT_PUBLIC_SITE_URL || "https://nibikes.co.uk";
   const staticRoutes = ["", "/dealers", "/sell"].map((path) => ({
     url: `${base}${path}`,
     lastModified: new Date(),

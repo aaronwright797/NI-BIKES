@@ -13,7 +13,7 @@ export async function generateMetadata({ params }) {
   if (!dealer) return {};
   const title = `${dealer.name} — Motorcycle Dealer in ${dealer.town}`;
   const description = `${dealer.bio} ${dealer.count} ${dealer.count === 1 ? "bike" : "bikes"} currently in stock.`.slice(0, 300);
-  return { title, description };
+  return { title, description, alternates: { canonical: `/dealers/${dealer.slug}` } };
 }
 
 export default async function DealerPage({ params }) {

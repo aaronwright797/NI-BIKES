@@ -4,6 +4,7 @@ import { getAllDealers } from "@/lib/data";
 export const metadata = {
   title: "Motorcycle Dealers in Northern Ireland",
   description: "Browse trusted motorcycle dealers across Northern Ireland and see their current stock on NI Bikes.",
+  alternates: { canonical: "/dealers" },
 };
 
 export default function DealersDirectory() {
