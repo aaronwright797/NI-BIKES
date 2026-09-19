@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { withTimeout } from "@/utils/withTimeout";
 
 export default function LogoutButton({ className }) {
   const router = useRouter();
@@ -10,11 +11,16 @@ export default function LogoutButton({ className }) {
 
   async function logout() {
     setLoading(true);
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    setLoading(false);
-    router.push("/");
-    router.refresh();
+    try {
+      const supabase = createClient();
+      await withTimeout(supabase.auth.signOut());
+      router.push("/");
+      router.refresh();
+    } catch (err) {
+      console.error("Logout failed:", err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

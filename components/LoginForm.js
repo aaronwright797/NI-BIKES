@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { withTimeout } from "@/utils/withTimeout";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -16,12 +17,17 @@ export default function LoginForm() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (signInError) { setError(signInError.message); return; }
-    router.push("/");
-    router.refresh();
+    try {
+      const supabase = createClient();
+      const { error: signInError } = await withTimeout(supabase.auth.signInWithPassword({ email, password }));
+      if (signInError) { setError(signInError.message); return; }
+      router.push("/");
+      router.refresh();
+    } catch (err) {
+      setError(err.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { withTimeout } from "@/utils/withTimeout";
 
 export default function SignupForm() {
   const router = useRouter();
@@ -24,22 +25,27 @@ export default function SignupForm() {
     if (password.length < 8) { setError("Password must be at least 8 characters."); return; }
 
     setLoading(true);
-    const supabase = createClient();
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { display_name: displayName.trim(), account_type: accountType },
-      },
-    });
-    setLoading(false);
-    if (signUpError) { setError(signUpError.message); return; }
+    try {
+      const supabase = createClient();
+      const { data, error: signUpError } = await withTimeout(supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { display_name: displayName.trim(), account_type: accountType },
+        },
+      }));
+      if (signUpError) { setError(signUpError.message); return; }
 
-    if (data.session) {
-      router.push("/");
-      router.refresh();
-    } else {
-      setCheckEmail(true);
+      if (data.session) {
+        router.push("/");
+        router.refresh();
+      } else {
+        setCheckEmail(true);
+      }
+    } catch (err) {
+      setError(err.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   }
 
