@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { withTimeout } from "@/utils/withTimeout";
+import { friendlyAuthError } from "@/utils/friendlyAuthError";
 
 export default function SignupForm() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function SignupForm() {
           data: { display_name: displayName.trim(), account_type: accountType },
         },
       }));
-      if (signUpError) { setError(signUpError.message); return; }
+      if (signUpError) { setError(friendlyAuthError(signUpError, "Sign-up")); return; }
 
       if (data.session) {
         router.push("/");
@@ -43,7 +44,7 @@ export default function SignupForm() {
         setCheckEmail(true);
       }
     } catch (err) {
-      setError(err.message || "Something went wrong. Please try again.");
+      setError(friendlyAuthError(err, "Sign-up"));
     } finally {
       setLoading(false);
     }

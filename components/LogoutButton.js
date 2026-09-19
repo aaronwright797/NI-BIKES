@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { withTimeout } from "@/utils/withTimeout";
+import { friendlyAuthError } from "@/utils/friendlyAuthError";
 
 export default function LogoutButton({ className }) {
   const router = useRouter();
@@ -13,11 +14,19 @@ export default function LogoutButton({ className }) {
     setLoading(true);
     try {
       const supabase = createClient();
-      await withTimeout(supabase.auth.signOut());
+      const { error: signOutError } = await withTimeout(supabase.auth.signOut());
+      if (signOutError) {
+        // friendlyAuthError logs network-layer failures with extra
+        // diagnostic detail; log anything else too, so a logout
+        // failure is never silent.
+        friendlyAuthError(signOutError, "Log-out");
+        console.error("Logout failed:", signOutError);
+        return;
+      }
       router.push("/");
       router.refresh();
     } catch (err) {
-      console.error("Logout failed:", err);
+      friendlyAuthError(err, "Log-out");
     } finally {
       setLoading(false);
     }

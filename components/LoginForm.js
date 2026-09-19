@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import { withTimeout } from "@/utils/withTimeout";
+import { friendlyAuthError } from "@/utils/friendlyAuthError";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -20,11 +21,11 @@ export default function LoginForm() {
     try {
       const supabase = createClient();
       const { error: signInError } = await withTimeout(supabase.auth.signInWithPassword({ email, password }));
-      if (signInError) { setError(signInError.message); return; }
+      if (signInError) { setError(friendlyAuthError(signInError, "Log-in")); return; }
       router.push("/");
       router.refresh();
     } catch (err) {
-      setError(err.message || "Something went wrong. Please try again.");
+      setError(friendlyAuthError(err, "Log-in"));
     } finally {
       setLoading(false);
     }
