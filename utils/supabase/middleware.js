@@ -9,22 +9,35 @@ export async function updateSession(request) {
     request,
   });
 
-  const supabase = createServerClient(supabaseUrl, supabaseKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        supabaseResponse = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options));
-      },
-    },
-  });
+  // Session refresh is a best-effort enhancement — if Supabase env vars
+  // are missing/misconfigured or the auth server is unreachable, fall
+  // through to the unmodified response rather than 500ing every route
+  // this proxy runs on (effectively the whole site).
+  if (!supabaseUrl || !supabaseKey) {
+    console.error("Supabase env vars are missing — skipping session refresh.");
+    return supabaseResponse;
+  }
 
-  // Refresh the session if expired — required for Server Components,
-  // which can't write cookies themselves.
-  await supabase.auth.getUser();
+  try {
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options));
+        },
+      },
+    });
+
+    // Refresh the session if expired — required for Server Components,
+    // which can't write cookies themselves.
+    await supabase.auth.getUser();
+  } catch (error) {
+    console.error("Supabase session refresh failed:", error);
+  }
 
   return supabaseResponse;
 }

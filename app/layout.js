@@ -13,12 +13,26 @@ export const metadata = {
 };
 
 export default async function RootLayout({ children }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // Auth state only affects what the header shows (logged in vs. logged
+  // out) — it must never take the whole site down if Supabase env vars
+  // are missing/misconfigured or the auth server is unreachable.
+  let user = null;
   let profile = null;
-  if (user) {
-    const { data } = await supabase.from("profiles").select("display_name, account_type").eq("id", user.id).single();
-    profile = data;
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+    if (user) {
+      const { data: profileData } = await supabase.from("profiles").select("display_name, account_type").eq("id", user.id).single();
+      profile = profileData;
+    }
+  } catch (error) {
+    // Next.js signals things like "this route needs dynamic rendering"
+    // and redirect()/notFound() by throwing an internal error tagged
+    // with a `digest` — those must always propagate, never be treated
+    // as a failed auth lookup.
+    if (error?.digest) throw error;
+    console.error("Failed to load auth session:", error);
   }
 
   return (
