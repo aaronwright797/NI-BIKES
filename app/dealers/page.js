@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getAllDealers } from "@/lib/data";
+import { getDealersWithStock } from "@/lib/listings";
 
 export const metadata = {
   title: "Motorcycle Dealers in Northern Ireland",
@@ -7,8 +7,10 @@ export const metadata = {
   alternates: { canonical: "/dealers" },
 };
 
-export default function DealersDirectory() {
-  const dealers = getAllDealers();
+export const revalidate = 300;
+
+export default async function DealersDirectory() {
+  const dealers = await getDealersWithStock();
   return (
     <div className="dealer-directory">
       <div className="section-head-v2">

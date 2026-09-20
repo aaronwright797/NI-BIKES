@@ -1,15 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getAllDealers, getDealerBySlug, getDealerStock, gbp } from "@/lib/data";
+import { gbp } from "@/lib/data";
+import { getDealersWithStock, getDealerBySlug } from "@/lib/listings";
 import PhotoOrArt from "@/components/PhotoOrArt";
 
-export function generateStaticParams() {
-  return getAllDealers().map((d) => ({ slug: d.slug }));
+export const revalidate = 300;
+
+export async function generateStaticParams() {
+  const dealers = await getDealersWithStock();
+  return dealers.map((d) => ({ slug: d.slug }));
 }
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const dealer = getDealerBySlug(slug);
+  const dealer = await getDealerBySlug(slug);
   if (!dealer) return {};
   const title = `${dealer.name} — Motorcycle Dealer in ${dealer.town}`;
   const description = `${dealer.bio} ${dealer.count} ${dealer.count === 1 ? "bike" : "bikes"} currently in stock.`.slice(0, 300);
@@ -18,10 +22,10 @@ export async function generateMetadata({ params }) {
 
 export default async function DealerPage({ params }) {
   const { slug } = await params;
-  const dealer = getDealerBySlug(slug);
+  const dealer = await getDealerBySlug(slug);
   if (!dealer) notFound();
 
-  const stock = getDealerStock(dealer.name);
+  const stock = dealer.stock;
 
   const jsonLd = {
     "@context": "https://schema.org",

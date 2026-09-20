@@ -4,12 +4,12 @@ import { useMemo, useRef, useState, Fragment } from "react";
 import Link from "next/link";
 import {
   CATEGORIES, OFFROAD, SERIOUS, STYLE_TAGS, PRICE_OPTIONS, NI_TOWNS,
-  CATEGORY_PHOTOS, HERO_PHOTO, SEED_LISTINGS, categoryMeta, gbp, milesShort, engineShort, getAllDealers,
+  CATEGORY_PHOTOS, HERO_PHOTO, categoryMeta, gbp, milesShort, engineShort,
 } from "@/lib/data";
 import { BikeMark, HeartIcon, StatIcon } from "./Icons";
 import PhotoOrArt from "./PhotoOrArt";
 
-export default function HomeExplorer() {
+export default function HomeExplorer({ listings, dealers: allDealers }) {
   const [category, setCategory] = useState("all");
   const [query, setQuery] = useState("");
   const [priceMax, setPriceMax] = useState("");
@@ -22,8 +22,6 @@ export default function HomeExplorer() {
   const [valuation, setValuation] = useState(null);
   const [valForm, setValForm] = useState({ make: "", model: "", year: new Date().getFullYear(), mileage: "" });
   const carouselRef = useRef(null);
-
-  const listings = SEED_LISTINGS;
 
   function toggleSaved(id, e) {
     if (e) { e.preventDefault(); e.stopPropagation(); }
@@ -49,14 +47,16 @@ export default function HomeExplorer() {
     if (sort === "price-low") out = [...out].sort((a, b) => a.price - b.price);
     if (sort === "price-high") out = [...out].sort((a, b) => b.price - a.price);
     if (sort === "year") out = [...out].sort((a, b) => b.year - a.year);
-    if (sort === "newest") out = [...out].sort((a, b) => b.id - a.id);
+    if (sort === "newest") out = [...out].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     return out;
   }, [listings, category, query, priceMax, sellerFilter, townFilter, verifiedOnly, styleFilter, sort]);
 
-  const justLanded = useMemo(() => [...listings].sort((a, b) => b.id - a.id).slice(0, 8), [listings]);
+  const justLanded = useMemo(
+    () => [...listings].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 8),
+    [listings]
+  );
 
-  const allDealers = useMemo(() => getAllDealers(), []);
-  const dealers = useMemo(() => allDealers.slice(0, 4), [allDealers]);
+  const topDealers = useMemo(() => allDealers.slice(0, 4), [allDealers]);
 
   function runValuation(e) {
     e.preventDefault();
@@ -279,7 +279,7 @@ export default function HomeExplorer() {
           <Link href="/dealers" className="text-link">View all dealers →</Link>
         </div>
         <div className="dealers-grid dealers-grid-v2">
-          {dealers.map((d) => (
+          {topDealers.map((d) => (
             <Link key={d.name} href={`/dealers/${d.slug}`} className="dealer-card dealer-card-v2">
               <div className="dealer-logo">{d.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}</div>
               <div className="dealer-v2-info"><h3>{d.name}</h3><p>{d.town} · ★ {d.rating.toFixed(1)}</p><span>{d.count} {d.count === 1 ? "bike" : "bikes"} for sale</span></div>

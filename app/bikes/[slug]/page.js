@@ -1,16 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { SEED_LISTINGS, getListingBySlug, getAllDealers, CATEGORIES, gbp, milesText } from "@/lib/data";
+import { CATEGORIES, gbp, milesText } from "@/lib/data";
+import { getActiveListingSlugs, getListingBySlug } from "@/lib/listings";
 import PhotoOrArt from "@/components/PhotoOrArt";
 import SaveButton from "@/components/SaveButton";
 
-export function generateStaticParams() {
-  return SEED_LISTINGS.map((l) => ({ slug: l.slug }));
+export const revalidate = 300;
+
+export async function generateStaticParams() {
+  const slugs = await getActiveListingSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const listing = getListingBySlug(slug);
+  const listing = await getListingBySlug(slug);
   if (!listing) return {};
   const title = `${listing.year} ${listing.title} for sale in ${listing.location} — ${gbp(listing.price)}`;
   const description = `${listing.year} ${listing.title}, ${milesText(listing.mileage)}, ${listing.location}. ${listing.desc}`.slice(0, 300);
@@ -28,10 +32,9 @@ export async function generateMetadata({ params }) {
 
 export default async function ListingPage({ params }) {
   const { slug } = await params;
-  const listing = getListingBySlug(slug);
+  const listing = await getListingBySlug(slug);
   if (!listing) notFound();
 
-  const dealer = listing.sellerType === "dealer" ? getAllDealers().find((d) => d.name === listing.sellerName) : null;
   const categoryLabel = CATEGORIES.find((c) => c.id === listing.category)?.label;
 
   const jsonLd = {
@@ -103,8 +106,8 @@ export default async function ListingPage({ params }) {
 
       <h2 className="detail-section-title">Seller</h2>
       <div className="seller-card">
-        {dealer ? (
-          <Link href={`/dealers/${dealer.slug}`} className={"seller-tag seller-tag-trade"}>{listing.sellerName}</Link>
+        {listing.dealerSlug ? (
+          <Link href={`/dealers/${listing.dealerSlug}`} className={"seller-tag seller-tag-trade"}>{listing.sellerName}</Link>
         ) : (
           <span className="seller-tag seller-tag-private">Private seller</span>
         )}

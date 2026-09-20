@@ -1,4 +1,5 @@
 import HomeExplorer from "@/components/HomeExplorer";
+import { getActiveListings, getDealersWithStock } from "@/lib/listings";
 
 export const metadata = {
   title: { absolute: "NI Bikes — Northern Ireland's Motorcycle Marketplace" },
@@ -6,6 +7,11 @@ export const metadata = {
   alternates: { canonical: "/" },
 };
 
-export default function Home() {
-  return <HomeExplorer />;
+// Revalidate periodically so new listings/dealers show up without a
+// full redeploy, while still serving a cached page most of the time.
+export const revalidate = 300;
+
+export default async function Home() {
+  const [listings, dealers] = await Promise.all([getActiveListings(), getDealersWithStock()]);
+  return <HomeExplorer listings={listings} dealers={dealers} />;
 }

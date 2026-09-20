@@ -1,16 +1,17 @@
-import { SEED_LISTINGS, getAllDealers } from "@/lib/data";
+import { getActiveListingSlugs, getDealersWithStock } from "@/lib/listings";
 
-export default function sitemap() {
+export default async function sitemap() {
   const base = process.env.NEXT_PUBLIC_SITE_URL || "https://nibikes.co.uk";
   const staticRoutes = ["", "/dealers", "/sell"].map((path) => ({
     url: `${base}${path}`,
     lastModified: new Date(),
   }));
-  const bikeRoutes = SEED_LISTINGS.map((l) => ({
-    url: `${base}/bikes/${l.slug}`,
+  const [bikeSlugs, dealers] = await Promise.all([getActiveListingSlugs(), getDealersWithStock()]);
+  const bikeRoutes = bikeSlugs.map((slug) => ({
+    url: `${base}/bikes/${slug}`,
     lastModified: new Date(),
   }));
-  const dealerRoutes = getAllDealers().map((d) => ({
+  const dealerRoutes = dealers.map((d) => ({
     url: `${base}/dealers/${d.slug}`,
     lastModified: new Date(),
   }));
