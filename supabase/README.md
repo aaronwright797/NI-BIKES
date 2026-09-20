@@ -17,11 +17,19 @@ initialized here).
    migration 1, which already auto-creates a profile on every new signup) — this only
    covers accounts that could exist without one already (e.g. predating that trigger, or
    added directly via the Supabase dashboard). Safe to run more than once.
+5. `migrations/20260920093000_seed_demo_listings.sql` — seeds the 12 demo bikes from
+   `lib/data.js`'s `SEED_LISTINGS` into `listings`. `seller_id` is the one real account in
+   `profiles` (looked up by `display_name = 'Aaron Wright'`; the migration raises a clear
+   error and inserts nothing if that account isn't found, rather than failing on a bare
+   `NOT NULL` violation). `dealer_id` is still resolved independently per listing by dealer
+   slug, matching each bike's original private/dealer attribution — who owns the row and
+   which dealer it's attributed to are separate. Every insert uses
+   `on conflict (slug) do nothing`, so running it more than once can't create duplicates.
+   Photos aren't seeded (see the file's own header comment for why).
 
-**Status: migrations 1–3 have been applied to the real Supabase project** (pasted into the
-SQL editor and confirmed working). **Migration 4 has not been applied yet** — paste it into
-the SQL editor the same way. Listings are still unseeded — every listing needs a real
-`seller_id` (a row in `auth.users`), which needs real accounts.
+**Status: migrations 1–4 have been applied to the real Supabase project** (pasted into the
+SQL editor and confirmed working — `profiles` now has a real `Aaron Wright` row). **Migration
+5 has not been applied yet** — paste it into the SQL editor the same way.
 
 ## How to apply
 
