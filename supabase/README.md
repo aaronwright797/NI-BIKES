@@ -11,11 +11,17 @@ initialized here).
    read/write policy.
 3. `migrations/20260919120200_seed_dealers.sql` — seeds the 6 real dealers from
    `lib/data.js`'s `DEALER_META`.
+4. `migrations/20260920090000_backfill_missing_profiles.sql` — one-time, idempotent
+   catch-up that creates a `profiles` row for any existing `auth.users` row that doesn't
+   already have one. Doesn't duplicate or replace `handle_new_user()` (the trigger from
+   migration 1, which already auto-creates a profile on every new signup) — this only
+   covers accounts that could exist without one already (e.g. predating that trigger, or
+   added directly via the Supabase dashboard). Safe to run more than once.
 
-**Status: all three have been applied to the real Supabase project** (pasted into the SQL
-editor and confirmed working). Listings are still unseeded — every listing needs a real
-`seller_id` (a row in `auth.users`), which needs real accounts, which needs auth wired up
-first (see below).
+**Status: migrations 1–3 have been applied to the real Supabase project** (pasted into the
+SQL editor and confirmed working). **Migration 4 has not been applied yet** — paste it into
+the SQL editor the same way. Listings are still unseeded — every listing needs a real
+`seller_id` (a row in `auth.users`), which needs real accounts.
 
 ## How to apply
 
