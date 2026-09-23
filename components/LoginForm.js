@@ -7,7 +7,7 @@ import { createClient } from "@/utils/supabase/client";
 import { withTimeout } from "@/utils/withTimeout";
 import { friendlyAuthError } from "@/utils/friendlyAuthError";
 
-export default function LoginForm() {
+export default function LoginForm({ next = "/" }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,7 +22,7 @@ export default function LoginForm() {
       const supabase = createClient();
       const { error: signInError } = await withTimeout(supabase.auth.signInWithPassword({ email, password }));
       if (signInError) { setError(friendlyAuthError(signInError, "Log-in")); return; }
-      router.push("/");
+      router.push(next);
       router.refresh();
     } catch (err) {
       setError(friendlyAuthError(err, "Log-in"));
@@ -43,7 +43,7 @@ export default function LoginForm() {
           <button type="submit" className="btn btn-amber" disabled={loading}>{loading ? "Logging in…" : "Log in"}</button>
         </div>
       </form>
-      <p className="muted-sm tier-note">No account? <Link href="/signup">Sign up</Link></p>
+      <p className="muted-sm tier-note">No account? <Link href={`/signup?next=${encodeURIComponent(next)}`}>Sign up</Link></p>
     </div>
   );
 }

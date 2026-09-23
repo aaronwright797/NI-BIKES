@@ -7,7 +7,7 @@ import { createClient } from "@/utils/supabase/client";
 import { withTimeout } from "@/utils/withTimeout";
 import { friendlyAuthError } from "@/utils/friendlyAuthError";
 
-export default function SignupForm() {
+export default function SignupForm({ next = "/" }) {
   const router = useRouter();
   const [accountType, setAccountType] = useState("private");
   const [displayName, setDisplayName] = useState("");
@@ -33,12 +33,16 @@ export default function SignupForm() {
         password,
         options: {
           data: { display_name: displayName.trim(), account_type: accountType },
+          // Only takes effect once the "Confirm signup" email template in
+          // the Supabase dashboard uses {{ .RedirectTo }} — see
+          // supabase/README.md. Harmless no-op until then.
+          emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(next)}`,
         },
       }));
       if (signUpError) { setError(friendlyAuthError(signUpError, "Sign-up")); return; }
 
       if (data.session) {
-        router.push("/");
+        router.push(next);
         router.refresh();
       } else {
         setCheckEmail(true);
@@ -56,7 +60,7 @@ export default function SignupForm() {
         <h2>Check your email</h2>
         <p className="muted">We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account, then log in.</p>
         <div className="sheet-actions">
-          <Link href="/login" className="btn btn-amber">Go to log in</Link>
+          <Link href={`/login?next=${encodeURIComponent(next)}`} className="btn btn-amber">Go to log in</Link>
         </div>
       </div>
     );
@@ -82,7 +86,7 @@ export default function SignupForm() {
           <button type="submit" className="btn btn-amber" disabled={loading}>{loading ? "Signing up…" : "Sign up"}</button>
         </div>
       </form>
-      <p className="muted-sm tier-note">Already have an account? <Link href="/login">Log in</Link></p>
+      <p className="muted-sm tier-note">Already have an account? <Link href={`/login?next=${encodeURIComponent(next)}`}>Log in</Link></p>
     </div>
   );
 }

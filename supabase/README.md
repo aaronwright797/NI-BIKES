@@ -64,6 +64,11 @@ actually log the user in**, and it can't be done from this repo — Supabase's d
 {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/
 ```
 
+Optional refinement: replace the hardcoded `next=/` with `next={{ .RedirectTo }}` so a signup
+started from a specific page (e.g. `/sell`) lands back there after email confirmation instead
+of always going home. `SignupForm.js` already passes `emailRedirectTo` for this; it's a no-op
+until the template is updated to use it.
+
 Alternatively, if you'd rather skip email confirmation entirely for now (faster to test,
 no template change needed), turn off **Confirm email** under **Authentication → Providers
 → Email** — signups will then get an active session immediately.

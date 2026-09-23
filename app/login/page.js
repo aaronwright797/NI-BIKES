@@ -7,11 +7,13 @@ export const metadata = {
   alternates: { canonical: "/login" },
 };
 
-export default function LoginPage() {
+export default async function LoginPage({ searchParams }) {
+  const sp = await searchParams;
+  const next = typeof sp?.next === "string" ? sp.next : "/";
   return (
     <div className="detail-page">
       <nav className="breadcrumb"><Link href="/">Home</Link> / Log in</nav>
-      <LoginForm />
+      <LoginForm next={next} />
     </div>
   );
 }

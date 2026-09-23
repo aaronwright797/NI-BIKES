@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CATEGORIES, STYLE_TAGS, NI_TOWNS } from "@/lib/data";
+import { createListing } from "@/lib/createListing";
+import { withTimeout } from "@/utils/withTimeout";
 
 export default function SellForm({ initialType }) {
   const router = useRouter();
@@ -13,7 +15,7 @@ export default function SellForm({ initialType }) {
     styleTags: [], photoUrl: "",
   });
   const [error, setError] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   function update(field, value) { setForm((f) => ({ ...f, [field]: value })); }
 
@@ -24,24 +26,24 @@ export default function SellForm({ initialType }) {
     }));
   }
 
-  function submit(e) {
+  async function submit(e) {
     e.preventDefault();
-    if (!form.title.trim() || !form.price || !form.location.trim()) { setError("Fill in at least a title, price and location."); return; }
+    if (!form.title.trim() || !form.make.trim() || !form.price || !form.location.trim()) {
+      setError("Fill in at least a title, make, price and location.");
+      return;
+    }
     if (form.sellerType === "dealer" && !form.sellerName.trim()) { setError("Add your dealership name so buyers know who they're dealing with."); return; }
     setError("");
-    setSubmitted(true);
-  }
-
-  if (submitted) {
-    return (
-      <div className="sheet-form" style={{ maxWidth: 640, margin: "0 auto" }}>
-        <h2>Listing submitted</h2>
-        <p className="muted">Thanks — &ldquo;{form.title}&rdquo; is queued to go live. Once accounts and the database are connected, published listings will appear instantly in search.</p>
-        <div className="sheet-actions">
-          <button className="btn btn-amber" onClick={() => router.push("/")}>Back to homepage</button>
-        </div>
-      </div>
-    );
+    setLoading(true);
+    try {
+      const slug = await withTimeout(createListing(form));
+      router.push(`/bikes/${slug}`);
+      router.refresh();
+    } catch (err) {
+      setError(err?.message || "Something went wrong publishing your listing. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -107,9 +109,9 @@ export default function SellForm({ initialType }) {
         </label>
         <label>Description<textarea rows={4} placeholder="Condition, history, extras included…" value={form.desc} onChange={(e) => update("desc", e.target.value)} /></label>
         {error && <p className="form-error">{error}</p>}
-        <p className="muted-sm tier-note">This build publishes your listing to a confirmation screen only — no payment, and nothing is saved to the database yet.</p>
+        <p className="muted-sm tier-note">Your listing goes live immediately once published. No payment is processed in this build.</p>
         <div className="sheet-actions">
-          <button type="submit" className="btn btn-amber">Publish listing</button>
+          <button type="submit" className="btn btn-amber" disabled={loading}>{loading ? "Publishing…" : "Publish listing"}</button>
         </div>
       </form>
     </div>

@@ -7,11 +7,13 @@ export const metadata = {
   alternates: { canonical: "/signup" },
 };
 
-export default function SignupPage() {
+export default async function SignupPage({ searchParams }) {
+  const sp = await searchParams;
+  const next = typeof sp?.next === "string" ? sp.next : "/";
   return (
     <div className="detail-page">
       <nav className="breadcrumb"><Link href="/">Home</Link> / Sign up</nav>
-      <SignupForm />
+      <SignupForm next={next} />
     </div>
   );
 }
