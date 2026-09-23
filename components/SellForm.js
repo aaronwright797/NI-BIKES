@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CATEGORIES, STYLE_TAGS, NI_TOWNS } from "@/lib/data";
 import { createListing } from "@/lib/createListing";
+import { MAX_PHOTOS, validatePhotoFiles, uploadListingPhotos } from "@/lib/uploadListingPhotos";
 import { withTimeout } from "@/utils/withTimeout";
 
 export default function SellForm({ initialType }) {
@@ -12,10 +13,22 @@ export default function SellForm({ initialType }) {
     title: "", make: "", category: "road", price: "", year: new Date().getFullYear(),
     mileage: "", location: "Belfast", engine: "", transmission: "6-speed", owners: 1,
     mot: "", registration: "", desc: "", sellerType: initialType === "dealer" ? "dealer" : "private", sellerName: "",
-    styleTags: [], photoUrl: "",
+    styleTags: [],
   });
+  const [photos, setPhotos] = useState([]); // File[]
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  // Set only when the listing published but some photos failed — in
+  // that case we stop short of auto-redirecting so the user actually
+  // sees the notice, rather than it flashing by as the page navigates.
+  const [publishedWithIssue, setPublishedWithIssue] = useState(null); // { slug, notice } | null
+
+  // Object URLs are per-file and only meaningful in this tab — revoke
+  // them on unmount/change so they don't leak memory.
+  const previewUrls = useMemo(() => photos.map((f) => URL.createObjectURL(f)), [photos]);
+  useEffect(() => {
+    return () => previewUrls.forEach((u) => URL.revokeObjectURL(u));
+  }, [previewUrls]);
 
   function update(field, value) { setForm((f) => ({ ...f, [field]: value })); }
 
@@ -26,6 +39,22 @@ export default function SellForm({ initialType }) {
     }));
   }
 
+  function onPhotosSelected(e) {
+    const selected = Array.from(e.target.files || []);
+    e.target.value = ""; // allow re-selecting the same file(s) later
+    if (selected.length === 0) return;
+    const combined = [...photos, ...selected];
+    const next = combined.slice(0, MAX_PHOTOS);
+    const errors = validatePhotoFiles(next);
+    if (combined.length > MAX_PHOTOS) errors.unshift(`Only the first ${MAX_PHOTOS} photos were kept (max ${MAX_PHOTOS}).`);
+    setError(errors[0] || "");
+    setPhotos(next);
+  }
+
+  function removePhoto(index) {
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
+  }
+
   async function submit(e) {
     e.preventDefault();
     if (!form.title.trim() || !form.make.trim() || !form.price || !form.location.trim()) {
@@ -33,10 +62,25 @@ export default function SellForm({ initialType }) {
       return;
     }
     if (form.sellerType === "dealer" && !form.sellerName.trim()) { setError("Add your dealership name so buyers know who they're dealing with."); return; }
+    const photoErrors = validatePhotoFiles(photos);
+    if (photoErrors.length > 0) { setError(photoErrors[0]); return; }
     setError("");
     setLoading(true);
     try {
-      const slug = await withTimeout(createListing(form));
+      const { id, slug } = await withTimeout(createListing(form));
+      // The listing already exists and is valid at this point regardless
+      // of what happens next — a photo problem is reported, never
+      // allowed to undo or block the listing itself.
+      if (photos.length > 0) {
+        const { failed } = await withTimeout(uploadListingPhotos(id, photos));
+        if (failed > 0) {
+          setPublishedWithIssue({
+            slug,
+            notice: `Listing published, but ${failed} of ${photos.length} photo${photos.length === 1 ? "" : "s"} failed to upload. You can add photos later.`,
+          });
+          return;
+        }
+      }
       router.push(`/bikes/${slug}`);
       router.refresh();
     } catch (err) {
@@ -44,6 +88,18 @@ export default function SellForm({ initialType }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (publishedWithIssue) {
+    return (
+      <div className="sheet-form" style={{ maxWidth: 640, margin: "0 auto" }}>
+        <h2>Listing published</h2>
+        <p className="muted">{publishedWithIssue.notice}</p>
+        <div className="sheet-actions">
+          <button className="btn btn-amber" onClick={() => router.push(`/bikes/${publishedWithIssue.slug}`)}>View your listing</button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -104,9 +160,30 @@ export default function SellForm({ initialType }) {
           </div>
         </label>
         <label>
-          Photo URL <span className="label-optional">(optional — link to a photo of your bike)</span>
-          <input type="url" placeholder="https://…" value={form.photoUrl} onChange={(e) => update("photoUrl", e.target.value)} />
+          Photos <span className="label-optional">(optional — up to {MAX_PHOTOS}, JPEG/PNG/WebP, 8MB each; first photo is the main one)</span>
+          <input type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={photos.length >= MAX_PHOTOS} onChange={onPhotosSelected} />
         </label>
+        {photos.length > 0 && (
+          <div className="style-check-grid">
+            {photos.map((file, i) => (
+              <div key={i} style={{ position: "relative", width: 72, height: 72 }}>
+                <img
+                  src={previewUrls[i]}
+                  alt=""
+                  style={{ width: 72, height: 72, objectFit: "cover", border: "1px solid var(--line)", display: "block" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => removePhoto(i)}
+                  aria-label={`Remove ${file.name}`}
+                  style={{ position: "absolute", top: -8, right: -8, width: 22, height: 22, borderRadius: "50%", border: "1px solid var(--line)", background: "var(--panel)", cursor: "pointer" }}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         <label>Description<textarea rows={4} placeholder="Condition, history, extras included…" value={form.desc} onChange={(e) => update("desc", e.target.value)} /></label>
         {error && <p className="form-error">{error}</p>}
         <p className="muted-sm tier-note">Your listing goes live immediately once published. No payment is processed in this build.</p>
