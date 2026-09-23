@@ -18,8 +18,12 @@ values (
 )
 on conflict (id) do nothing;
 
-alter table storage.objects enable row level security;
-
+-- storage.objects is owned by the supabase_storage_admin role, not the
+-- role this migration runs as, so it can't be altered here — but
+-- Supabase enables RLS on it by default when a project is provisioned,
+-- and policies can still be created on it without owning the table, so
+-- no `alter table ... enable row level security` is needed or possible.
+--
 -- Ownership is proven by path, not the `owner` column: every upload is
 -- written to `<uploader's auth.uid()>/<listing id>/<file>`, so an
 -- object's first path segment is who's allowed to write/delete it.
